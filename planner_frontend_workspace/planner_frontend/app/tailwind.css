@@ -1,0 +1,22 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --tw-primary: #2563eb;
+  --tw-secondary: #64748b;
+  --tw-accent: #f59e42;
+}
+html,
+body {
+  @apply bg-white dark:bg-gray-950;
+
+  @media (prefers-color-scheme: dark) {
+    color-scheme: dark;
+  }
+}
+.text-primary { color: var(--tw-primary) !important; }
+.bg-primary { background-color: var(--tw-primary) !important; }
+.text-secondary { color: var(--tw-secondary) !important; }
+.text-accent { color: var(--tw-accent) !important; }
+.bg-accent { background-color: var(--tw-accent) !important; }
