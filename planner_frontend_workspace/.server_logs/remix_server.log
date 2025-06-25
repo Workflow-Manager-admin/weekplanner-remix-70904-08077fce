@@ -5,11 +5,3 @@
 [33mThe CJS build of Vite's Node API is deprecated. See https://vite.dev/guide/troubleshooting.html#vite-cjs-node-api-deprecated for more details.[39m
   ➜  Local:   http://localhost:3000/
   ➜  Network: http://172.17.0.2:3000/
-8:37:16 AM [vite] (client) page reload /home/kavia/workspace/code-generation/weekplanner-remix-70904-08077fce/planner_frontend_workspace/planner_frontend/app/routes/planner.$day.tsx
-8:37:16 AM [vite] (client) page reload /home/kavia/workspace/code-generation/weekplanner-remix-70904-08077fce/planner_frontend_workspace/planner_frontend/app/routes/planner.$day.tsx
-8:37:16 AM [vite] (client) page reload app/routes/planner.$day.tsx
-8:37:16 AM [vite] (ssr) page reload app/routes/planner.$day.tsx
-8:37:38 AM [vite] (client) page reload /home/kavia/workspace/code-generation/weekplanner-remix-70904-08077fce/planner_frontend_workspace/planner_frontend/app/routes/planner.$day.tsx
-8:37:38 AM [vite] (client) page reload /home/kavia/workspace/code-generation/weekplanner-remix-70904-08077fce/planner_frontend_workspace/planner_frontend/app/routes/planner.$day.tsx
-8:37:38 AM [vite] (client) page reload app/routes/planner.$day.tsx
-8:37:38 AM [vite] (ssr) page reload app/routes/planner.$day.tsx
