@@ -1,4 +1,4 @@
-import { useParams } from "@remix-run/react";
+import { useParams, useNavigate } from "@remix-run/react";
 import { useDayTasks } from "~/utils/taskStorage";
 import { dayNameFor, NAV_DAYS, DayKey, todayKey } from "~/utils/days";
 import TaskInput from "~/components/TaskInput";
@@ -11,13 +11,15 @@ import TaskList from "~/components/TaskList";
  */
 export default function PlannerDayRoute() {
   const params = useParams();
-  let day = NAV_DAYS.find((d) => d === params.day) as DayKey | undefined;
-  if (!day) {
-    // If "today" isn't found, fallback to "monday"
-    day = todayKey();
+  const navigate = useNavigate();
+
+  // Always determine the intended day first
+  let actualDay = NAV_DAYS.find((d) => d === params.day) as DayKey | undefined;
+  if (!actualDay) {
+    actualDay = todayKey();
   }
 
-  // All task state and mutation handled client-side only
+  // Always call hooks BEFORE any conditional branch/return
   const {
     tasks,
     addTask,
@@ -25,29 +27,45 @@ export default function PlannerDayRoute() {
     editTask,
     deleteTask,
     reorderTasks,
-  } = useDayTasks(day!);
+  } = useDayTasks(actualDay);
+
+  // If route param is invalid, fix via navigation after render
+  React.useEffect(() => {
+    if (params.day !== actualDay) {
+      navigate(`/planner/${actualDay}`, { replace: true });
+    }
+    // eslint-disable-next-line
+  }, [params.day, actualDay, navigate]);
 
   const completed = tasks.filter((t) => t.completed).length;
   const total = tasks.length;
+
+  // Render nothing if redirecting (prevents flash of wrong UI)
+  if (params.day !== actualDay) {
+    return null;
+  }
 
   return (
     <section
       aria-labelledby="day-title"
       className="flex flex-col gap-8"
     >
-      <header>
+      <header className="w-full max-w-xl mx-auto">
         <h2
           id="day-title"
           className="text-2xl font-bold text-gray-800 dark:text-gray-100 mb-1"
         >
-          {dayNameFor(day!)}&apos;s Tasks
+          {dayNameFor(actualDay)}&apos;s Tasks
         </h2>
-        <p className="text-gray-500 dark:text-gray-400 text-sm">
-          Organize your {dayNameFor(day!)}. Add, complete, edit, or delete tasks.
+        <p className="text-gray-500 dark:text-gray-400 text-sm mb-4">
+          Organize your {dayNameFor(actualDay)}. Add, complete, edit, or delete tasks.
         </p>
+        {/* Always-visible Add Task input and button */}
+        <div className="py-2">
+          <TaskInput onSubmit={addTask} />
+        </div>
       </header>
-      <div className="w-full max-w-xl flex flex-col gap-6">
-        <TaskInput onSubmit={addTask} />
+      <div className="w-full max-w-xl flex flex-col gap-6 mx-auto">
         <TaskList
           tasks={tasks}
           onToggle={toggleTask}
@@ -56,7 +74,7 @@ export default function PlannerDayRoute() {
           onReorder={reorderTasks}
         />
       </div>
-      <footer className="mt-auto">
+      <footer className="mt-auto w-full max-w-xl mx-auto">
         <span className="text-gray-500 dark:text-gray-400 text-sm">
           {completed} / {total} complete
         </span>
