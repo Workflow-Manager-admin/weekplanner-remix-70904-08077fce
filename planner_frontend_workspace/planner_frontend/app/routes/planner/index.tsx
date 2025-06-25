@@ -1,17 +1,19 @@
 import { useSearchParams, useNavigate } from "@remix-run/react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useWeekTasks, useResetWeek } from "~/utils/taskStorage";
 import { NAV_DAYS, dayNameFor } from "~/utils/days";
+import TaskInput from "~/components/TaskInput";
 
 // PUBLIC_INTERFACE
 /**
  * WeeklyOverview shows a summary of all week tasks, safely using client-side storage for data.
  */
 export default function WeeklyOverview() {
-  const { week, refresh } = useWeekTasks();
+  const { week, refresh, setWeek } = useWeekTasks();
   const resetWeek = useResetWeek(refresh);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
+  const [quickAddDay, setQuickAddDay] = useState<string | null>(null);
 
   // Handle 'reset week' on client side only
   useEffect(() => {
@@ -42,6 +44,21 @@ export default function WeeklyOverview() {
     });
   });
 
+  // Add task to a specific day from overview
+  function handleQuickAdd(day: string) {
+    setQuickAddDay(day);
+  }
+  function handleQuickAddSubmit(day: string, text: string) {
+    setWeek((current) => ({
+      ...current,
+      [day]: [
+        ...(current[day] || []),
+        { id: `${Date.now()}${Math.random()}`, text, completed: false },
+      ],
+    }));
+    setQuickAddDay(null);
+  }
+
   return (
     <section aria-labelledby="overview-title" className="h-full flex flex-col gap-8">
       <header>
@@ -49,19 +66,33 @@ export default function WeeklyOverview() {
           Weekly Overview
         </h2>
         <p className="text-gray-500 dark:text-gray-400">
-          See your tasks for the week. Click a day to view or edit tasks.
+          See your tasks for the week. <span className="font-semibold text-primary">Add a task right here or click a day to manage details!</span>
         </p>
       </header>
       <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4 flex-1">
         {NAV_DAYS.map((day) => (
-          <a
+          <div
             key={day}
-            href={`/planner/${day}`}
             className="group flex flex-col mb-auto p-4 rounded-lg border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 shadow-sm hover:bg-primary/5 transition"
-            tabIndex={0}
             aria-label={`Go to ${dayNameFor(day)}`}
           >
-            <h3 className="font-semibold text-primary mb-2">{dayNameFor(day)}</h3>
+            <div className="flex items-center justify-between mb-2 gap-2">
+              <h3 className="font-semibold text-primary">{dayNameFor(day)}</h3>
+              <button
+                aria-label={`Add task to ${dayNameFor(day)}`}
+                className="rounded text-xs text-accent hover:bg-accent/10 px-2 py-1 font-semibold"
+                onClick={() => handleQuickAdd(day)}
+              >
+                ＋
+              </button>
+            </div>
+            {quickAddDay === day && (
+              <div className="mb-2">
+                <TaskInput
+                  onSubmit={(txt) => handleQuickAddSubmit(day, txt)}
+                />
+              </div>
+            )}
             <div className="flex-1 min-h-6">
               <ul className="text-xs text-gray-700 dark:text-gray-200 flex flex-col gap-1">
                 {week[day] && week[day].length > 0 ? (
@@ -84,7 +115,14 @@ export default function WeeklyOverview() {
             <div className="mt-2 text-xs text-gray-400">
               {week[day]?.filter((t) => t.completed).length ?? 0} / {week[day]?.length ?? 0} complete
             </div>
-          </a>
+            <a
+              href={`/planner/${day}`}
+              className="mt-3 block rounded bg-primary text-white text-center py-1 text-xs font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary"
+              tabIndex={0}
+            >
+              View & Edit tasks
+            </a>
+          </div>
         ))}
       </div>
       <footer className="flex flex-col gap-2">
