@@ -1,26 +1,27 @@
 import { useSearchParams, useNavigate } from "@remix-run/react";
-import { useEffect, useState } from "react";
-import { getWeekTasks, resetWeek, Task } from "~/utils/taskStorage";
-import { NAV_DAYS, dayNameFor, DayKey } from "~/utils/days";
+import { useEffect } from "react";
+import { useWeekTasks, useResetWeek } from "~/utils/taskStorage";
+import { NAV_DAYS, dayNameFor } from "~/utils/days";
 
 // PUBLIC_INTERFACE
+/**
+ * WeeklyOverview shows a summary of all week tasks, safely using client-side storage for data.
+ */
 export default function WeeklyOverview() {
-  const [week, setWeek] = useState<Record<DayKey, Task[]>>(() => getWeekTasks());
+  const { week, refresh } = useWeekTasks();
+  const resetWeek = useResetWeek(refresh);
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
 
-  function refreshData() {
-    setWeek(getWeekTasks());
-  }
-
+  // Handle 'reset week' on client side only
   useEffect(() => {
-    refreshData();
-    // Handle reset week
+    // Always refresh data on mount or param change
+    refresh();
     if (searchParams.get("reset") === "1") {
       // eslint-disable-next-line no-alert
       if (window.confirm("Reset all tasks for this week?")) {
         resetWeek();
-        refreshData();
+        refresh();
       }
       // Remove ?reset=1 from URL
       searchParams.delete("reset");
@@ -34,7 +35,7 @@ export default function WeeklyOverview() {
   let pendingCount = 0;
   let total = 0;
   NAV_DAYS.forEach((day) => {
-    week[day].forEach((task) => {
+    week[day]?.forEach((task) => {
       total += 1;
       if (task.completed) completedCount += 1;
       else pendingCount += 1;
@@ -63,7 +64,7 @@ export default function WeeklyOverview() {
             <h3 className="font-semibold text-primary mb-2">{dayNameFor(day)}</h3>
             <div className="flex-1 min-h-6">
               <ul className="text-xs text-gray-700 dark:text-gray-200 flex flex-col gap-1">
-                {week[day].length > 0 ? (
+                {week[day] && week[day].length > 0 ? (
                   week[day].slice(0, 3).map((task) => (
                     <li
                       key={task.id}
@@ -75,13 +76,13 @@ export default function WeeklyOverview() {
                 ) : (
                   <li className="italic text-gray-400">No tasks</li>
                 )}
-                {week[day].length > 3 && (
+                {week[day] && week[day].length > 3 && (
                   <li className="text-gray-400">+{week[day].length - 3} more…</li>
                 )}
               </ul>
             </div>
             <div className="mt-2 text-xs text-gray-400">
-              {week[day].filter((t) => t.completed).length} / {week[day].length} complete
+              {week[day]?.filter((t) => t.completed).length ?? 0} / {week[day]?.length ?? 0} complete
             </div>
           </a>
         ))}

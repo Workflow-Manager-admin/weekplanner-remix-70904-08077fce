@@ -1,15 +1,14 @@
 import { useParams } from "@remix-run/react";
-import { useEffect, useState } from "react";
-import {
-  getTasksForDay,
-  saveTasksForDay,
-  Task,
-} from "~/utils/taskStorage";
+import { useDayTasks } from "~/utils/taskStorage";
 import { dayNameFor, NAV_DAYS, DayKey, todayKey } from "~/utils/days";
 import TaskInput from "~/components/TaskInput";
 import TaskList from "~/components/TaskList";
 
 // PUBLIC_INTERFACE
+/**
+ * PlannerDayRoute renders the task manager for a single day,
+ * using client-side browser storage for persistence.
+ */
 export default function PlannerDayRoute() {
   const params = useParams();
   let day = NAV_DAYS.find((d) => d === params.day) as DayKey | undefined;
@@ -17,49 +16,16 @@ export default function PlannerDayRoute() {
     // If "today" isn't found, fallback to "monday"
     day = todayKey();
   }
-  const [tasks, setTasks] = useState<Task[]>(() => getTasksForDay(day!));
-  // Remove unused state '_'
 
-  // Update state if day changes route
-  useEffect(() => {
-    setTasks(getTasksForDay(day!));
-  }, [day]);
-
-  // When tasks update, save to localStorage
-  useEffect(() => {
-    saveTasksForDay(day!, tasks);
-  }, [tasks, day]);
-
-  const handleAdd = (text: string) => {
-    setTasks((current) => [
-      ...current,
-      {
-        id: `${Date.now()}${Math.random()}`,
-        text,
-        completed: false,
-      },
-    ]);
-  };
-  const handleToggle = (id: string) => {
-    setTasks((current) =>
-      current.map((t) => (t.id === id ? { ...t, completed: !t.completed } : t))
-    );
-  };
-  const handleEdit = (id: string, newText: string) => {
-    setTasks((current) =>
-      current.map((t) => (t.id === id ? { ...t, text: newText } : t))
-    );
-  };
-  const handleDelete = (id: string) => {
-    setTasks((current) => current.filter((t) => t.id !== id));
-  };
-  const handleReorder = (orderedIds: string[]) => {
-    setTasks((current) =>
-      orderedIds
-        .map((id) => current.find((t) => t.id === id))
-        .filter((t): t is Task => !!t)
-    );
-  };
+  // All task state and mutation handled client-side only
+  const {
+    tasks,
+    addTask,
+    toggleTask,
+    editTask,
+    deleteTask,
+    reorderTasks,
+  } = useDayTasks(day!);
 
   const completed = tasks.filter((t) => t.completed).length;
   const total = tasks.length;
@@ -81,13 +47,13 @@ export default function PlannerDayRoute() {
         </p>
       </header>
       <div className="w-full max-w-xl flex flex-col gap-6">
-        <TaskInput onSubmit={handleAdd} />
+        <TaskInput onSubmit={addTask} />
         <TaskList
           tasks={tasks}
-          onToggle={handleToggle}
-          onEdit={handleEdit}
-          onDelete={handleDelete}
-          onReorder={handleReorder}
+          onToggle={toggleTask}
+          onEdit={editTask}
+          onDelete={deleteTask}
+          onReorder={reorderTasks}
         />
       </div>
       <footer className="mt-auto">
